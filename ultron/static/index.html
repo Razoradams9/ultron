@@ -206,16 +206,19 @@
 /* ── neural entity — particle network, the movie centerpiece ────── */
 const canvas = document.getElementById("entity");
 const ctx = canvas.getContext("2d");
+// Cap pixel ratio: high-DPI screens otherwise render 2-3x the pixels, which
+// is the main source of jank over a remote (Colab tunnel) connection.
+const DPR = Math.min(devicePixelRatio || 1, 1.5);
 let W, H, CX, CY;
 function resize() {
-  W = canvas.width = canvas.offsetWidth * devicePixelRatio;
-  H = canvas.height = canvas.offsetHeight * devicePixelRatio;
+  W = canvas.width = canvas.offsetWidth * DPR;
+  H = canvas.height = canvas.offsetHeight * DPR;
   CX = W / 2; CY = H * 0.52;
 }
 resize();
 addEventListener("resize", resize);
 
-const N = 150, LINK = 90 * devicePixelRatio;
+const N = 90, LINK = 90 * DPR;
 const nodes = [];
 for (let i = 0; i < N; i++) {
   const core = Math.random() < 0.45;                 // dense inner cluster
@@ -225,13 +228,19 @@ for (let i = 0; i < N; i++) {
     r,                                               // radius factor
     z: (Math.random() - 0.5),                        // pseudo-depth wobble
     s: 0.4 + Math.random() * 0.6,                    // speed factor
-    sz: (core ? 1.6 : 1.0) * devicePixelRatio,
+    sz: (core ? 1.6 : 1.0) * DPR,
   });
 }
 let busy = false, t = 0, pulse = 0;
 
-function frame() {
-  t += busy ? 0.014 : 0.004;
+// Frame-rate cap (~30fps): the field is ambient, so half the frames look
+// identical but cost half the CPU — big win on a laggy remote tab.
+let _last = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (now - _last < 33) return;
+  _last = now;
+  t += busy ? 0.028 : 0.008;
   ctx.clearRect(0, 0, W, H);
   const R = Math.min(W, H) * 0.34;
   const glow = busy ? 1 : 0.72;
@@ -240,7 +249,7 @@ function frame() {
   // positions
   const pts = nodes.map(n => {
     const ang = n.a + t * n.s * (n.r < 0.55 ? 1.7 : 1);
-    const wob = Math.sin(t * 2 + n.a * 3) * 8 * devicePixelRatio;
+    const wob = Math.sin(t * 2 + n.a * 3) * 8 * DPR;
     return {
       x: CX + Math.cos(ang) * n.r * R,
       y: CY + Math.sin(ang) * n.r * R * 0.82 + n.z * wob,
@@ -249,7 +258,7 @@ function frame() {
   });
 
   // links
-  ctx.lineWidth = devicePixelRatio * 0.7;
+  ctx.lineWidth = DPR * 0.7;
   for (let i = 0; i < N; i++) {
     for (let j = i + 1; j < N; j++) {
       const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
@@ -261,14 +270,15 @@ function frame() {
       }
     }
   }
-  // nodes
+  // nodes — shadowBlur per node is the single most expensive op, so we skip
+  // it and lean on the additive ("lighter") blend + a soft halo dot to keep
+  // the glow. Two cheap fills per node beat one blurred fill by a mile.
   for (const p of pts) {
-    ctx.fillStyle = `rgba(160, 225, 255, ${0.85 * glow})`;
-    ctx.shadowColor = "rgba(90, 190, 255, .9)";
-    ctx.shadowBlur = 6 * devicePixelRatio;
+    ctx.fillStyle = `rgba(90, 190, 255, ${0.22 * glow})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.sz * 2.6, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(190, 235, 255, ${0.9 * glow})`;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.sz, 0, 7); ctx.fill();
   }
-  ctx.shadowBlur = 0;
   // core bloom
   const g = ctx.createRadialGradient(CX, CY, 0, CX, CY, R * 0.5);
   g.addColorStop(0, `rgba(120, 200, 255, ${0.16 * glow + pulse})`);
@@ -278,7 +288,6 @@ function frame() {
   if (pulse > 0) pulse -= 0.02;
 
   ctx.globalCompositeOperation = "source-over";
-  requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
