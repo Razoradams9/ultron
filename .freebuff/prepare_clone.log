@@ -1,0 +1,13 @@
+decoded 560s @ 24000Hz mono
+chunk 0 (0-100s): 29 segments
+chunk 1 (100-200s): 21 segments
+chunk 2 (200-300s): 34 segments
+chunk 3 (300-400s): 26 segments
+chunk 4 (400-500s): 16 segments
+chunk 5 (500-560s): 11 segments
+137 segments total, 134 high-confidence
+picked 3 spans, 21.0s total:
+  [ 400.0- 409.6] lp=-0.09  have anyone else i was meant to be new i was meant to be beautiful the
+  [ 409.6- 417.0] lp=-0.09  the sky and seen hope seen mercy instead they'll look up in horror bec
+  [ 417.7- 421.7] lp=-0.09  come to confess your sins i don't know how much time you got more than
+WROTE voice\samples\reference.wav — 21.5s voiceprint

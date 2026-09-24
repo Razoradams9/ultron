@@ -1,0 +1,15 @@
+INFO:     Started server process [14220]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53916 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53917 - "GET /api/vitals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53921 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64350 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64356 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64357 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64358 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64357 - "GET /api/vitals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64358 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64357 - "GET /api/vitals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64358 - "GET /api/status HTTP/1.1" 200 OK

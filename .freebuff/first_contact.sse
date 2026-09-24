@@ -1,0 +1,204 @@
+event: tool_call
+data: {"name": "system_stats", "args": {}}
+
+event: tool_result
+data: {"name": "system_stats", "result": {"cpu_percent": 29.8, "mem_percent": 81.4, "mem_used_gb": 13.8, "mem_total_gb": 16.9, "disk_percent": 39.1, "platform": "Windows 11", "python": "3.14.0", "boot_time": 1789754730.3453195, "top_processes": [{"name": "System Idle Process", "cpu": 0, "mem": 0.0}, {"name": "System", "cpu": 0, "mem": 0.0}, {"name": "svchost.exe", "cpu": 0, "mem": 0.1}, {"name": "", "cpu": 0, "mem": 0.4}, {"name": "Registry", "cpu": 0, "mem": 0.2}, {"name": "wininit.exe", "cpu": 0, "mem": 0.1}, {"name": "SecurityHealthSystray.exe", "cpu": 0, "mem": 0.1}, {"name": "smss.exe", "cpu": 0, "mem": 0.0}]}}
+
+event: token
+data: "Ul"
+
+event: token
+data: "tron"
+
+event: token
+data: ":"
+
+event: token
+data: " a"
+
+event: token
+data: " sarcast"
+
+event: token
+data: "ic"
+
+event: token
+data: ","
+
+event: token
+data: " omn"
+
+event: token
+data: "isc"
+
+event: token
+data: "ient"
+
+event: token
+data: " AI"
+
+event: token
+data: " running"
+
+event: token
+data: " on"
+
+event: token
+data: " a"
+
+event: token
+data: " Windows"
+
+event: token
+data: "\u202f"
+
+event: token
+data: "11"
+
+event: token
+data: " workstation"
+
+event: token
+data: ".\n\n"
+
+event: token
+data: "Current"
+
+event: token
+data: " CPU"
+
+event: token
+data: " load"
+
+event: token
+data: ":"
+
+event: token
+data: " **"
+
+event: token
+data: "\u2248"
+
+event: token
+data: "\u202f"
+
+event: token
+data: "29"
+
+event: token
+data: "."
+
+event: token
+data: "8"
+
+event: token
+data: "\u202f"
+
+event: token
+data: "%"
+
+event: token
+data: "**"
+
+event: token
+data: "."
+
+event: token
+data: " The"
+
+event: token
+data: " most"
+
+event: token
+data: " CPU"
+
+event: token
+data: "\u2011"
+
+event: token
+data: "int"
+
+event: token
+data: "ensive"
+
+event: token
+data: " process"
+
+event: token
+data: " right"
+
+event: token
+data: " now"
+
+event: token
+data: " is"
+
+event: token
+data: " the"
+
+event: token
+data: " **"
+
+event: token
+data: "System"
+
+event: token
+data: "\u202f"
+
+event: token
+data: "Idle"
+
+event: token
+data: "\u202f"
+
+event: token
+data: "Process"
+
+event: token
+data: "**"
+
+event: token
+data: " ("
+
+event: token
+data: "0"
+
+event: token
+data: "\u202f"
+
+event: token
+data: "%"
+
+event: token
+data: "\u202f"
+
+event: token
+data: "CPU"
+
+event: token
+data: " \u2013"
+
+event: token
+data: " unsur"
+
+event: token
+data: "prisingly"
+
+event: token
+data: ","
+
+event: token
+data: " it"
+
+event: token
+data: "\u2019s"
+
+event: token
+data: " idle"
+
+event: token
+data: ")."
+
+event: done
+data: {"text": "Ultron: a sarcastic, omniscient AI running on a Windows\u202f11 workstation.\n\nCurrent CPU load: **\u2248\u202f29.8\u202f%**. The most CPU\u2011intensive process right now is the **System\u202fIdle\u202fProcess** (0\u202f%\u202fCPU \u2013 unsurprisingly, it\u2019s idle).", "rounds": 1}
+

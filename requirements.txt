@@ -1,0 +1,15 @@
+# Ultron core
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+httpx>=0.27
+python-dotenv>=1.0
+
+# Providers (install what you use; code degrades gracefully)
+anthropic>=0.34
+openai>=1.30
+
+# Lightweight optional extras
+psutil>=5.9
+python-multipart>=0.0.9
