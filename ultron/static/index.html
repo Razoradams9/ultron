@@ -9,16 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --void: #04080f;
-    --panel: rgba(10, 22, 38, .55);
-    --line: rgba(120, 190, 255, .28);
-    --line-dim: rgba(120, 190, 255, .12);
-    --cyan: #6fd9ff;
-    --cyan-hot: #bfeeff;
-    --blue: #38b6ff;
-    --text: #cfe8ff;
-    --fog: #6d93b8;
-    --ember: linear-gradient(90deg, #ff9a3c, #ff5e00);
+    --void: #0a0403;            /* near-black with a red undertone */
+    --panel: rgba(30, 10, 8, .55);
+    --line: rgba(255, 110, 60, .30);
+    --line-dim: rgba(255, 110, 60, .13);
+    --ember: #ff6a2c;           /* primary hot orange */
+    --ember-hot: #ffb27a;       /* highlight */
+    --crimson: #ff2d1a;         /* menacing red */
+    --text: #ffd9c4;
+    --fog: #b8887a;
+    --grad: linear-gradient(90deg, #ff9a3c, #ff2d00);
     --mono: "DM Sans", "Consolas", monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,31 +33,31 @@
   body::before {
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background:
-      linear-gradient(rgba(90,160,230,.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(90,160,230,.05) 1px, transparent 1px);
+      linear-gradient(rgba(230,110,60,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(230,110,60,.045) 1px, transparent 1px);
     background-size: 44px 44px;
     mask-image: radial-gradient(120% 120% at 50% 40%, #000 30%, transparent 100%);
   }
   body::after {
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 2;
-    background: radial-gradient(110% 110% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+    background: radial-gradient(110% 110% at 50% 45%, transparent 52%, rgba(0,0,0,.62) 100%);
   }
 
   /* ── HUD frame ─────────────────────────────────── */
   #hud {
     position: fixed; inset: 14px; z-index: 1;
     border: 1px solid var(--line);
-    box-shadow: 0 0 0 1px rgba(8, 18, 32, .9), 0 0 44px rgba(20, 80, 140, .18) inset;
+    box-shadow: 0 0 0 1px rgba(30, 8, 4, .9), 0 0 48px rgba(180, 40, 10, .20) inset;
     display: flex; flex-direction: column;
   }
   .bracket { position: absolute; width: 26px; height: 26px; pointer-events: none; }
-  .bracket.tl { top: -3px; left: -3px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
-  .bracket.tr { top: -3px; right: -3px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
-  .bracket.bl { bottom: -3px; left: -3px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
-  .bracket.br { bottom: -3px; right: -3px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+  .bracket.tl { top: -3px; left: -3px; border-top: 2px solid var(--ember); border-left: 2px solid var(--ember); }
+  .bracket.tr { top: -3px; right: -3px; border-top: 2px solid var(--ember); border-right: 2px solid var(--ember); }
+  .bracket.bl { bottom: -3px; left: -3px; border-bottom: 2px solid var(--ember); border-left: 2px solid var(--ember); }
+  .bracket.br { bottom: -3px; right: -3px; border-bottom: 2px solid var(--ember); border-right: 2px solid var(--ember); }
   .pixels {
     position: absolute; width: 90px; height: 10px; pointer-events: none; opacity: .8;
-    background-image: repeating-linear-gradient(90deg, var(--cyan) 0 3px, transparent 3px 6px);
+    background-image: repeating-linear-gradient(90deg, var(--ember) 0 3px, transparent 3px 6px);
   }
   .pixels.a { top: -16px; left: 8px; }
   .pixels.b { bottom: -16px; right: 8px; }
@@ -69,7 +69,7 @@
   }
   #titlebar {
     display: flex; align-items: center; gap: 10px;
-    background: var(--ember); color: #1a0d00;
+    background: var(--grad); color: #1a0500;
     font-weight: 500; letter-spacing: 2.5px; font-size: 14px;
     padding: 0 18px; flex: none;
     clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
@@ -78,9 +78,9 @@
     display: flex; align-items: center; gap: 18px; margin-left: auto;
     padding-right: 16px; font-size: 12px; letter-spacing: 1.6px; color: var(--fog);
   }
-  #topbar .meta b { color: var(--cyan); font-weight: 400; }
-  .sysdot { width: 7px; height: 7px; border-radius: 50%; background: #27435f; display: inline-block; margin-right: 6px; }
-  .sysdot.on { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  #topbar .meta b { color: var(--ember); font-weight: 400; }
+  .sysdot { width: 7px; height: 7px; border-radius: 50%; background: #5a2a20; display: inline-block; margin-right: 6px; }
+  .sysdot.on { background: var(--ember); box-shadow: 0 0 8px var(--ember); }
 
   /* ── stage ─────────────────────────────────────── */
   #stage { position: relative; flex: 1; min-height: 0; }
@@ -96,8 +96,8 @@
   #vitals h3 { font-size: 10px; letter-spacing: 2.2px; color: var(--fog); margin-bottom: 8px; font-weight: 400; }
   #vitals .row { display: flex; justify-content: space-between; font-size: 11px; color: var(--fog); margin: 3px 0; }
   #vitals .row b { color: var(--text); font-weight: 400; font-variant-numeric: tabular-nums; }
-  #vitals .bar { height: 3px; background: rgba(120,190,255,.12); margin: 3px 0 7px; }
-  #vitals .bar i { display: block; height: 100%; width: 0%; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); transition: width .6s ease; }
+  #vitals .bar { height: 3px; background: rgba(255,110,60,.12); margin: 3px 0 7px; }
+  #vitals .bar i { display: block; height: 100%; width: 0%; background: var(--ember); box-shadow: 0 0 6px var(--ember); transition: width .6s ease; }
 
   /* chat log — bottom left overlay */
   #log {
@@ -107,17 +107,17 @@
   }
   .msg { margin-bottom: 16px; }
   .msg .who { font-size: 10px; letter-spacing: 2.4px; color: var(--fog); margin-bottom: 4px; }
-  .msg.ultron .who { color: var(--cyan); }
+  .msg.ultron .who { color: var(--ember); }
   .msg .body { font-size: 15px; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-wrap: break-word; }
-  .msg.user .body { color: #9db8d4; }
-  .msg.ultron .body { color: var(--cyan-hot); text-shadow: 0 0 14px rgba(110, 200, 255, .25); }
+  .msg.user .body { color: #d8a894; }
+  .msg.ultron .body { color: var(--ember-hot); text-shadow: 0 0 14px rgba(255, 90, 40, .30); }
   .msg.error .body {
     color: #ffb08a; font-size: 13px; padding: 10px 12px;
-    background: rgba(60, 20, 8, .4); border-left: 2px solid #ff5e00;
+    background: rgba(70, 16, 6, .45); border-left: 2px solid var(--crimson);
   }
   .tool { font-size: 11px; letter-spacing: .8px; color: var(--fog); margin-bottom: 10px; }
-  .tool b { color: var(--cyan); font-weight: 400; }
-  .cursor { display: inline-block; width: 8px; height: 14px; margin-left: 2px; background: var(--cyan);
+  .tool b { color: var(--ember); font-weight: 400; }
+  .cursor { display: inline-block; width: 8px; height: 14px; margin-left: 2px; background: var(--ember);
             vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 
@@ -125,7 +125,7 @@
   #console {
     flex: none; display: flex; gap: 10px; align-items: center;
     padding: 14px 16px; border-top: 1px solid var(--line-dim);
-    background: rgba(6, 14, 26, .6);
+    background: rgba(24, 8, 5, .6);
   }
   .tag {
     flex: none; font-size: 10px; letter-spacing: 2px; color: var(--fog);
@@ -135,19 +135,19 @@
     transition: color .15s ease, border-color .15s ease, background .15s ease;
   }
   .tag:hover { color: var(--text); border-color: var(--line); }
-  #mic.rec { color: #ff6a3c; border-color: #ff6a3c; background: rgba(80, 20, 0, .35); animation: micpulse 1s ease-in-out infinite; }
-  @keyframes micpulse { 50% { box-shadow: 0 0 14px rgba(255, 90, 40, .5); } }
-  #spk.on { color: var(--cyan); border-color: var(--cyan); background: rgba(10, 40, 70, .35); }
+  #mic.rec { color: var(--crimson); border-color: var(--crimson); background: rgba(90, 18, 6, .4); animation: micpulse 1s ease-in-out infinite; }
+  @keyframes micpulse { 50% { box-shadow: 0 0 14px rgba(255, 60, 30, .55); } }
+  #spk.on, #cloneBtn.on { color: var(--ember); border-color: var(--ember); background: rgba(70, 24, 8, .4); }
   #input {
-    flex: 1; background: rgba(8, 18, 32, .7); border: 1px solid var(--line-dim);
-    color: var(--cyan-hot); font-family: var(--mono); font-size: 15px;
+    flex: 1; background: rgba(26, 9, 5, .7); border: 1px solid var(--line-dim);
+    color: var(--ember-hot); font-family: var(--mono); font-size: 15px;
     padding: 11px 14px; outline: none;
     clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
   }
   #input::placeholder { color: var(--fog); }
-  #input:focus { border-color: var(--cyan); box-shadow: 0 0 14px rgba(110, 200, 255, .18) inset; }
+  #input:focus { border-color: var(--ember); box-shadow: 0 0 14px rgba(255, 90, 40, .18) inset; }
   #send {
-    flex: none; background: var(--ember); border: none; color: #1a0d00;
+    flex: none; background: var(--grad); border: none; color: #1a0500;
     font-family: var(--mono); font-weight: 500; letter-spacing: 2px; font-size: 13px;
     padding: 12px 26px; cursor: pointer;
     clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
@@ -157,7 +157,7 @@
   #send:disabled { filter: saturate(.25) brightness(.55); cursor: default; }
 
   ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-thumb { background: rgba(120,190,255,.2); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,110,60,.22); }
   @media (prefers-reduced-motion: reduce) { #entity { display: none; } }
 </style>
 </head>
@@ -203,90 +203,113 @@
   </div>
 
 <script>
-/* ── neural entity — particle network, the movie centerpiece ────── */
+/* ── the menacing core — Ultron's red eye ───────────────────────
+   A glowing crimson orb: a hot inner iris, a breathing bloom, a slow
+   rotating ring of embers, and a contracting pupil. It brightens and
+   quickens when Ultron is thinking. Frame-capped for remote (tunnel) use. */
 const canvas = document.getElementById("entity");
 const ctx = canvas.getContext("2d");
-// Cap pixel ratio: high-DPI screens otherwise render 2-3x the pixels, which
-// is the main source of jank over a remote (Colab tunnel) connection.
+// Cap pixel ratio: high-DPI screens otherwise render 2-3x the pixels — the
+// main source of jank over a remote (Colab tunnel) connection.
 const DPR = Math.min(devicePixelRatio || 1, 1.5);
 let W, H, CX, CY;
 function resize() {
   W = canvas.width = canvas.offsetWidth * DPR;
   H = canvas.height = canvas.offsetHeight * DPR;
-  CX = W / 2; CY = H * 0.52;
+  CX = W / 2; CY = H * 0.5;
 }
 resize();
 addEventListener("resize", resize);
 
-const N = 90, LINK = 90 * DPR;
-const nodes = [];
-for (let i = 0; i < N; i++) {
-  const core = Math.random() < 0.45;                 // dense inner cluster
-  const r = (core ? 0.55 * Math.pow(Math.random(), 1.6) : 0.6 + Math.random() * 0.4);
-  nodes.push({
-    a: Math.random() * Math.PI * 2,                  // angle
-    r,                                               // radius factor
-    z: (Math.random() - 0.5),                        // pseudo-depth wobble
-    s: 0.4 + Math.random() * 0.6,                    // speed factor
-    sz: (core ? 1.6 : 1.0) * DPR,
+// ring of orbiting embers around the core
+const RING = 46;
+const embers = [];
+for (let i = 0; i < RING; i++) {
+  embers.push({
+    a: (i / RING) * Math.PI * 2 + Math.random() * 0.1,
+    rf: 0.92 + Math.random() * 0.22,     // radius factor off the core
+    s: 0.10 + Math.random() * 0.18,      // orbit speed
+    sz: 0.7 + Math.random() * 1.4,       // size
+    tw: Math.random() * Math.PI * 2,     // twinkle phase
   });
 }
+
 let busy = false, t = 0, pulse = 0;
 
 // Frame-rate cap (~30fps): the field is ambient, so half the frames look
-// identical but cost half the CPU — big win on a laggy remote tab.
+// identical but cost half the CPU — a big win on a laggy remote tab.
 let _last = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   if (now - _last < 33) return;
   _last = now;
-  t += busy ? 0.028 : 0.008;
+
+  const speed = busy ? 0.030 : 0.010;
+  t += speed;
   ctx.clearRect(0, 0, W, H);
-  const R = Math.min(W, H) * 0.34;
-  const glow = busy ? 1 : 0.72;
   ctx.globalCompositeOperation = "lighter";
 
-  // positions
-  const pts = nodes.map(n => {
-    const ang = n.a + t * n.s * (n.r < 0.55 ? 1.7 : 1);
-    const wob = Math.sin(t * 2 + n.a * 3) * 8 * DPR;
-    return {
-      x: CX + Math.cos(ang) * n.r * R,
-      y: CY + Math.sin(ang) * n.r * R * 0.82 + n.z * wob,
-      sz: n.sz,
-    };
-  });
+  const R = Math.min(W, H) * 0.16;             // core radius
+  const breathe = 1 + Math.sin(t * 1.6) * 0.05 + pulse;
+  const heat = busy ? 1 : 0.82;
 
-  // links
-  ctx.lineWidth = DPR * 0.7;
-  for (let i = 0; i < N; i++) {
-    for (let j = i + 1; j < N; j++) {
-      const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
-      const d = Math.hypot(dx, dy);
-      if (d < LINK) {
-        const a = (1 - d / LINK) * 0.5 * glow;
-        ctx.strokeStyle = `rgba(90, 190, 255, ${a})`;
-        ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke();
-      }
-    }
-  }
-  // nodes — shadowBlur per node is the single most expensive op, so we skip
-  // it and lean on the additive ("lighter") blend + a soft halo dot to keep
-  // the glow. Two cheap fills per node beat one blurred fill by a mile.
-  for (const p of pts) {
-    ctx.fillStyle = `rgba(90, 190, 255, ${0.22 * glow})`;
-    ctx.beginPath(); ctx.arc(p.x, p.y, p.sz * 2.6, 0, 7); ctx.fill();
-    ctx.fillStyle = `rgba(190, 235, 255, ${0.9 * glow})`;
-    ctx.beginPath(); ctx.arc(p.x, p.y, p.sz, 0, 7); ctx.fill();
-  }
-  // core bloom
-  const g = ctx.createRadialGradient(CX, CY, 0, CX, CY, R * 0.5);
-  g.addColorStop(0, `rgba(120, 200, 255, ${0.16 * glow + pulse})`);
-  g.addColorStop(1, "rgba(120, 200, 255, 0)");
+  // outer bloom halo
+  let g = ctx.createRadialGradient(CX, CY, 0, CX, CY, R * 3.4 * breathe);
+  g.addColorStop(0, `rgba(255, 90, 30, ${0.20 * heat + pulse * 0.5})`);
+  g.addColorStop(0.4, `rgba(220, 40, 12, ${0.10 * heat})`);
+  g.addColorStop(1, "rgba(180, 20, 8, 0)");
   ctx.fillStyle = g;
-  ctx.fillRect(CX - R, CY - R, R * 2, R * 2);
-  if (pulse > 0) pulse -= 0.02;
+  ctx.fillRect(CX - R * 3.6, CY - R * 3.6, R * 7.2, R * 7.2);
 
+  // orbiting embers
+  for (const e of embers) {
+    const ang = e.a + t * e.s;
+    const rr = R * (1.55 * e.rf) * breathe;
+    const x = CX + Math.cos(ang) * rr;
+    const y = CY + Math.sin(ang) * rr * 0.9;
+    const tw = 0.5 + 0.5 * Math.sin(t * 2.4 + e.tw);
+    ctx.fillStyle = `rgba(255, ${120 + tw * 90 | 0}, 60, ${(0.30 + tw * 0.5) * heat})`;
+    ctx.beginPath(); ctx.arc(x, y, e.sz * DPR * (0.8 + tw * 0.6), 0, 7); ctx.fill();
+  }
+
+  // rotating arc sweep — a scanning ring
+  ctx.lineWidth = 2 * DPR;
+  const sweep = t * 0.6;
+  const arcR = R * 2.05 * breathe;
+  g = ctx.createLinearGradient(CX - arcR, CY, CX + arcR, CY);
+  ctx.strokeStyle = `rgba(255, 120, 50, ${0.5 * heat})`;
+  ctx.beginPath();
+  ctx.arc(CX, CY, arcR, sweep, sweep + 1.1);
+  ctx.stroke();
+  ctx.strokeStyle = `rgba(255, 60, 30, ${0.35 * heat})`;
+  ctx.beginPath();
+  ctx.arc(CX, CY, arcR * 0.86, -sweep * 1.3, -sweep * 1.3 + 0.8);
+  ctx.stroke();
+
+  // the core body — hot crimson gradient
+  g = ctx.createRadialGradient(CX, CY - R * 0.15, R * 0.1, CX, CY, R * breathe);
+  g.addColorStop(0, `rgba(255, 220, 180, ${0.98 * heat})`);
+  g.addColorStop(0.25, `rgba(255, 120, 50, ${0.95 * heat})`);
+  g.addColorStop(0.7, `rgba(220, 30, 14, ${0.9 * heat})`);
+  g.addColorStop(1, `rgba(120, 12, 6, ${0.85 * heat})`);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(CX, CY, R * breathe, 0, 7); ctx.fill();
+
+  // contracting pupil — the menace
+  const pupil = R * (0.34 - 0.06 * Math.sin(t * 1.2) - pulse * 0.5);
+  g = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(pupil, 1));
+  g.addColorStop(0, "rgba(20, 2, 2, 0.96)");
+  g.addColorStop(0.7, "rgba(60, 6, 4, 0.7)");
+  g.addColorStop(1, "rgba(120, 12, 6, 0)");
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(CX, CY, Math.max(pupil, 1), 0, 7); ctx.fill();
+
+  // bright rim highlight
+  ctx.lineWidth = 1.5 * DPR;
+  ctx.strokeStyle = `rgba(255, 200, 150, ${0.55 * heat})`;
+  ctx.beginPath(); ctx.arc(CX, CY, R * breathe, 0, 7); ctx.stroke();
+
+  if (pulse > 0) pulse -= 0.02;
   ctx.globalCompositeOperation = "source-over";
 }
 requestAnimationFrame(frame);
@@ -319,7 +342,7 @@ async function sendMsg() {
   const text = input.value.trim();
   if (!text || chatBusy) return;
   chatBusy = true; send.disabled = true; input.value = "";
-  busy = true;
+  busy = true; pulse = 0.25;
   el("user", "AVEN", text);
   const body = el("ultron", "ULTRON");
   const cursor = document.createElement("span");
@@ -353,7 +376,7 @@ async function sendMsg() {
           acc += d; body.textContent = acc; body.appendChild(cursor);
           log.scrollTop = log.scrollHeight;
         } else if (ev === "tool_call") {
-          pulse = 0.12;
+          pulse = 0.22;
           toolLine(d.name, JSON.stringify(d.args).slice(0, 110));
         } else if (ev === "tool_result") {
           const s = JSON.stringify(d.result);
@@ -424,8 +447,6 @@ spkBtn.addEventListener("click", () => {
   spkBtn.textContent = voiceOn ? "VOICE: ON" : "VOICE: OFF";
   if (!voiceOn) stopSpeech();
 });
-
-
 
 /* ── local voice clone: upload sample -> Chatterbox voiceprint ─── */
 async function voiceStatus() {
