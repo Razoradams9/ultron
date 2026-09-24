@@ -198,6 +198,23 @@ def _trim_prompt(path: Path) -> str:
     return str(trimmed)
 
 
+def _trim_silence(a, sr: int, thresh: float = 0.015):
+    """Strip near-silent padding Chatterbox adds to each chunk. That padding,
+    repeated at every sentence, is what makes the voice pause on full stops."""
+    import numpy as np
+
+    if a.size == 0:
+        return a
+    mask = np.abs(a) > thresh
+    if not mask.any():
+        return a
+    lo = int(np.argmax(mask))
+    hi = int(len(a) - np.argmax(mask[::-1]))
+    # keep a hair of head/tail so words don't clip
+    pad = int(0.01 * sr)
+    return a[max(0, lo - pad): min(len(a), hi + pad)]
+
+
 def _synthesize(text: str) -> bytes:
     """Sentence-chunked synthesis with a hard per-call guard; concat to one WAV.
     Full renders are cached to disk, so repeats are instant."""
@@ -235,8 +252,20 @@ def _synthesize(text: str) -> bytes:
                     exaggeration=GEN_EXAGGERATION,
                     temperature=GEN_TEMPERATURE,
                 )
-            pieces.append(wav.detach().cpu().flatten().clamp(-1, 1).numpy())
-    audio = np.concatenate(pieces) if len(pieces) > 1 else pieces[0]
+            piece = wav.detach().cpu().flatten().clamp(-1, 1).numpy()
+            pieces.append(_trim_silence(piece, sr))
+    if len(pieces) > 1:
+        # a short, uniform beat between sentences reads as natural speech
+        # instead of the long uneven pauses Chatterbox pads on
+        gap = np.zeros(int(0.09 * sr), dtype=pieces[0].dtype)
+        stitched = []
+        for i, p in enumerate(pieces):
+            if i:
+                stitched.append(gap)
+            stitched.append(p)
+        audio = np.concatenate(stitched)
+    else:
+        audio = pieces[0]
     out = _pcm_wav(audio, sr)
     if len(out) < 30_000_000:  # don't cache pathological runaway renders
         ck.write_bytes(out)

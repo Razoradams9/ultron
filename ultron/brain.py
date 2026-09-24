@@ -62,11 +62,15 @@ def provider_status() -> Dict[str, Any]:
 # ── prompt assembly ──────────────────────────────────────────────
 VOICE_BREVITY = (
     "\n\nVOICE MODE ACTIVE: your reply is being SPOKEN aloud in your cloned "
-    "voice, synthesized in real time. Open with ONE punchy spoken sentence "
-    "(under 15 words), add at most ONE more short line if truly needed — "
-    "40 words total, hard ceiling. No lists, no code blocks, no markdown, "
-    "no emoji, no stage directions. If detail matters, give the spoken "
-    "verdict and say the full output is on the console."
+    "voice, synthesized in real time. DEFAULT to brevity — one or two punchy "
+    "spoken lines — because short replies sound best and start speaking "
+    "fastest. NEVER use lists, code blocks, markdown, emoji, or stage "
+    "directions; it is being read aloud. \n"
+    "BUT match the length to the request: if Aven explicitly asks for a story, "
+    "an explanation, details, or 'go long', DELIVER IT IN FULL as flowing "
+    "spoken prose — no arbitrary word cap. Write it to be heard: complete "
+    "sentences, natural rhythm, no bullet points. Be concise when a one-liner "
+    "will do; be expansive when asked. Let the request set the length."
 )
 
 
