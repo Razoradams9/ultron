@@ -41,8 +41,16 @@ CACHE_DIR = HERE / "cache"
 CACHE_LIMIT = 60 * 1024 * 1024  # 60MB of rendered lines
 
 # Voiceprint length: Chatterbox conditions its output length on the prompt;
-# a 21s prompt invites runaway generations. Trim to a tight 12s.
-MAX_PROMPT_S = 12.0
+# a long prompt invites runaway generations AND drifts off-voice mid-output.
+# A tight 10s prompt holds the clone far better.
+MAX_PROMPT_S = 10.0
+
+# Generation settings tuned for strong, stable voice cloning (validated on GPU):
+# high cfg_weight pulls hard toward the reference, low temperature stops the
+# voice wandering mid-sentence. Overridable via env for experimentation.
+GEN_CFG_WEIGHT = float(os.environ.get("VOICE_CFG_WEIGHT", "0.8"))
+GEN_EXAGGERATION = float(os.environ.get("VOICE_EXAGGERATION", "0.5"))
+GEN_TEMPERATURE = float(os.environ.get("VOICE_TEMPERATURE", "0.6"))
 
 
 def _log(msg: str) -> None:
@@ -160,7 +168,7 @@ def health():
     }
 
 
-def _sentences(text: str, cap: int = 280) -> list[str]:
+def _sentences(text: str, cap: int = 200) -> list[str]:
     """Split into sentence chunks under `cap` chars so each generate() call
     stays small and bounded (long single calls can run away on CPU)."""
     parts = re.split(r"(?<=[.!?;:])\s+", text[:1400])
@@ -213,9 +221,20 @@ def _synthesize(text: str) -> bytes:
         for i, c in enumerate(chunks):
             _log(f"chunk {i+1}/{len(chunks)} ({len(c)} chars)")
             if prompt:
-                wav = model.generate(c, audio_prompt_path=prompt)
+                wav = model.generate(
+                    c,
+                    audio_prompt_path=prompt,
+                    cfg_weight=GEN_CFG_WEIGHT,
+                    exaggeration=GEN_EXAGGERATION,
+                    temperature=GEN_TEMPERATURE,
+                )
             else:
-                wav = model.generate(c)
+                wav = model.generate(
+                    c,
+                    cfg_weight=GEN_CFG_WEIGHT,
+                    exaggeration=GEN_EXAGGERATION,
+                    temperature=GEN_TEMPERATURE,
+                )
             pieces.append(wav.detach().cpu().flatten().clamp(-1, 1).numpy())
     audio = np.concatenate(pieces) if len(pieces) > 1 else pieces[0]
     out = _pcm_wav(audio, sr)
