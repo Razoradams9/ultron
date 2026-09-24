@@ -33,7 +33,7 @@ import threading
 
 app = FastAPI(title="ultron-voice")
 
-_state = {"model": None, "sr": 24000}
+_state = {"model": None, "sr": 24000, "device": None}
 _load_lock = threading.Lock()
 _gen_lock = threading.Lock()  # CPU synthesis is strictly one-at-a-time
 
@@ -49,36 +49,60 @@ def _log(msg: str) -> None:
     print(f"[voice] {msg}", flush=True)
 
 
+def _pick_device() -> str:
+    """VOICE_DEVICE env wins; otherwise auto-detect CUDA (Colab GPU) then CPU."""
+    forced = (os.environ.get("VOICE_DEVICE") or "").strip().lower()
+    if forced in ("cpu", "cuda"):
+        return forced
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            return "cuda"
+    except Exception:  # noqa: BLE001
+        pass
+    return "cpu"
+
+
 def get_model():
-    """Lazy-load Chatterbox on CPU; cached for the process lifetime.
-    Uses all cores and int8-quantizes the transformer (~35% faster on CPU)."""
+    """Lazy-load Chatterbox; cached for the process lifetime.
+
+    On CPU: uses all cores and int8-quantizes the transformer (~35% faster).
+    On CUDA (e.g. a Colab GPU): loads on the GPU and skips int8 quantization,
+    which is a CPU-only path. Set VOICE_DEVICE=cpu|cuda to force it."""
     with _load_lock:
         if _state["model"] is None:
             import torch
 
-            cores = os.cpu_count() or 4
-            torch.set_num_threads(cores)          # torch defaults to half here
-            try:
-                torch.set_num_interop_threads(1)
-            except RuntimeError:
-                pass  # already initialized
-            _log(f"loading ChatterboxTTS on cpu, {cores} threads...")
+            device = _pick_device()
+            if device == "cpu":
+                cores = os.cpu_count() or 4
+                torch.set_num_threads(cores)      # torch defaults to half here
+                try:
+                    torch.set_num_interop_threads(1)
+                except RuntimeError:
+                    pass  # already initialized
+                _log(f"loading ChatterboxTTS on cpu, {cores} threads...")
+            else:
+                _log(f"loading ChatterboxTTS on {device}...")
             from chatterbox.tts import ChatterboxTTS  # heavy import, deferred
 
-            m = ChatterboxTTS.from_pretrained(device="cpu")
-            try:
-                import torch.quantization as q
+            m = ChatterboxTTS.from_pretrained(device=device)
+            if device == "cpu":
+                try:
+                    import torch.quantization as q
 
-                m.t3.tfmr = q.quantize_dynamic(
-                    m.t3.tfmr, {torch.nn.Linear}, dtype=torch.qint8)
-                m.t3.speech_head = q.quantize_dynamic(
-                    m.t3.speech_head, {torch.nn.Linear}, dtype=torch.qint8)
-                _log("int8 quantization applied to t3 transformer")
-            except Exception as e:  # noqa: BLE001
-                _log(f"int8 quantization skipped: {e!r}")
+                    m.t3.tfmr = q.quantize_dynamic(
+                        m.t3.tfmr, {torch.nn.Linear}, dtype=torch.qint8)
+                    m.t3.speech_head = q.quantize_dynamic(
+                        m.t3.speech_head, {torch.nn.Linear}, dtype=torch.qint8)
+                    _log("int8 quantization applied to t3 transformer")
+                except Exception as e:  # noqa: BLE001
+                    _log(f"int8 quantization skipped: {e!r}")
             _state["model"] = m
             _state["sr"] = m.sr
-            _log(f"model ready, sample rate {_state['sr']}")
+            _state["device"] = device
+            _log(f"model ready on {device}, sample rate {_state['sr']}")
     return _state["model"]
 
 
@@ -129,7 +153,7 @@ def tensor_to_wav(wav_tensor, sr: int) -> bytes:
 def health():
     return {
         "ready": _state["model"] is not None,
-        "device": "cpu",
+        "device": _state["device"] or _pick_device(),
         "cloned": REF_PATH.exists(),
         "sample": str(REF_PATH) if REF_PATH.exists() else None,
         "python": sys.version.split()[0],

@@ -88,7 +88,9 @@ def stt(file: UploadFile = File(...)) -> dict:
     return res
 
 
-VOICE_URL = "http://127.0.0.1:8001"
+import os
+
+VOICE_URL = os.environ.get("VOICE_URL", "http://127.0.0.1:8001").rstrip("/")
 
 
 def _voice_health(timeout: float = 2.0) -> dict | None:
