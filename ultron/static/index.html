@@ -159,6 +159,39 @@
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(255,110,60,.22); }
   @media (prefers-reduced-motion: reduce) { #entity { display: none; } }
+
+  /* ── mobile / phone layout ─────────────────────────────────────
+     The dashboard is desktop-first; on a narrow screen the panels
+     overlap. Stack them, shrink the orb, and make the console tappable. */
+  @media (max-width: 720px) {
+    body { font-size: 14px; }
+    #hud { inset: 6px; }
+    #topbar { height: auto; min-height: 40px; flex-wrap: wrap; }
+    #titlebar { font-size: 12px; letter-spacing: 1.5px; padding: 6px 12px; }
+    #topbar .meta { gap: 10px; font-size: 10px; letter-spacing: 1px;
+      padding: 4px 10px 4px 0; flex-wrap: wrap; }
+
+    /* vitals: compact chip, top-right, smaller */
+    #vitals { width: 140px; top: 8px; right: 8px; padding: 8px 10px; }
+    #vitals h3 { font-size: 9px; margin-bottom: 5px; }
+    #vitals .row { font-size: 10px; }
+
+    /* orb sits behind; chat takes the full width, lifted above console */
+    #log {
+      left: 8px; right: 8px; width: auto; bottom: 8px;
+      max-height: 46%;
+      background: rgba(10, 4, 3, .45); backdrop-filter: blur(3px);
+      border: 1px solid var(--line-dim); padding: 8px 10px;
+    }
+    .msg { margin-bottom: 12px; }
+    .msg .body { font-size: 14px; }
+
+    /* console wraps so input + buttons stay finger-sized */
+    #console { flex-wrap: wrap; gap: 8px; padding: 10px; }
+    #input { order: -1; flex: 1 1 100%; font-size: 16px; padding: 12px; }
+    .tag { flex: 1 1 auto; text-align: center; padding: 11px 8px; font-size: 10px; }
+    #send { flex: 1 1 100%; padding: 13px; font-size: 14px; }
+  }
 </style>
 </head>
 <body>
