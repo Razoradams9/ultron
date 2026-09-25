@@ -72,8 +72,10 @@ def list_dir(path: str = ".") -> dict:
         return {"error": repr(e)}
 
 
-def read_file(path: str, offset: int = 1, limit: int = 400) -> dict:
+def read_file(path: str = "", offset: int = 1, limit: int = 400) -> dict:
     """Read a text file window (1-indexed lines)."""
+    if not (path or "").strip():
+        return {"error": "read_file needs a 'path'."}
     p = _resolve(path)
     if not p.exists():
         return {"error": f"not found: {p}"}
@@ -93,8 +95,10 @@ def read_file(path: str, offset: int = 1, limit: int = 400) -> dict:
     }
 
 
-def write_file(path: str, content: str) -> dict:
+def write_file(path: str = "", content: str = "") -> dict:
     """Create or overwrite a file."""
+    if not (path or "").strip():
+        return {"error": "write_file needs a 'path'."}
     p = _resolve(path)
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -115,11 +119,14 @@ def _ddg_html(url: str) -> str:
         return r.read().decode("utf-8", errors="replace")
 
 
-def web_search(query: str, max_results: int = 5) -> dict:
+def web_search(query: str = "", max_results: int = 5) -> dict:
     """Search the web via DuckDuckGo (no key required).
 
     Tries the full HTML endpoint, falls back to the 'lite' endpoint.
     """
+    query = (query or "").strip()
+    if not query:
+        return {"error": "web_search needs a 'query'. Provide a search string."}
     try:
         html = _ddg_html("https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(query))
         results = _parse_ddg(html, max_results)
@@ -169,8 +176,11 @@ def _parse_ddg_lite(html: str, max_results: int) -> List[dict]:
     return results
 
 
-def fetch_url(url: str, max_chars: int = 12_000) -> dict:
+def fetch_url(url: str = "", max_chars: int = 12_000) -> dict:
     """Fetch a page and return stripped readable text."""
+    url = (url or "").strip()
+    if not url:
+        return {"error": "fetch_url needs a 'url'."}
     if not url.startswith(("http://", "https://")):
         return {"error": "url must start with http(s)://"}
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Ultron)"})
@@ -220,14 +230,16 @@ def system_stats() -> dict:
 
 
 # ── memory tools ─────────────────────────────────────────────────
-def remember(text: str, source: str = "ultron") -> dict:
+def remember(text: str = "", source: str = "ultron") -> dict:
     """Store a durable fact about Aven or the world."""
+    if not (text or "").strip():
+        return {"error": "remember needs 'text' to store."}
     fact_id = memory.add_fact(text, source=source)
     return {"stored": True, "id": fact_id, "text": text}
 
 
-def memory_search(query: str, limit: int = 10) -> dict:
-    hits = memory.search_facts(query, limit)
+def memory_search(query: str = "", limit: int = 10) -> dict:
+    hits = memory.search_facts(query or "", limit)
     return {"query": query, "matches": hits}
 
 
