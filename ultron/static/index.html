@@ -160,37 +160,71 @@
   ::-webkit-scrollbar-thumb { background: rgba(255,110,60,.22); }
   @media (prefers-reduced-motion: reduce) { #entity { display: none; } }
 
+  /* ── orb toggle (mobile only) ───────────────────────────────────
+     A small button to hide the background orb and reclaim screen for
+     the chat log. Hidden on desktop where there's room for both. */
+  #orbToggle { display: none; }
+
   /* ── mobile / phone layout ─────────────────────────────────────
      The dashboard is desktop-first; on a narrow screen the panels
      overlap. Stack them, shrink the orb, and make the console tappable. */
   @media (max-width: 720px) {
     body { font-size: 14px; }
+    /* let the page scroll if the on-screen keyboard squeezes the layout */
+    body { overflow: auto; }
     #hud { inset: 6px; }
     #topbar { height: auto; min-height: 40px; flex-wrap: wrap; }
     #titlebar { font-size: 12px; letter-spacing: 1.5px; padding: 6px 12px; }
     #topbar .meta { gap: 10px; font-size: 10px; letter-spacing: 1px;
       padding: 4px 10px 4px 0; flex-wrap: wrap; }
 
-    /* vitals: compact chip, top-right, smaller */
-    #vitals { width: 140px; top: 8px; right: 8px; padding: 8px 10px; }
-    #vitals h3 { font-size: 9px; margin-bottom: 5px; }
-    #vitals .row { font-size: 10px; }
+    /* vitals: a slim single-row strip pinned top-right, not a tall chip that
+       collides with the chat. Bars hidden to save vertical space. */
+    #vitals {
+      width: auto; top: 6px; right: 6px; left: auto; padding: 6px 9px;
+      display: flex; gap: 12px; align-items: center;
+    }
+    #vitals h3 { display: none; }
+    #vitals .bar { display: none; }
+    #vitals .row { display: inline-flex; gap: 5px; margin: 0; font-size: 10px; }
+    #vitals .row span { color: var(--fog); }
+    /* OS row is noise on a phone strip */
+    #vitals .row:last-of-type { display: none; }
 
     /* orb sits behind; chat takes the full width, lifted above console */
     #log {
-      left: 8px; right: 8px; width: auto; bottom: 8px;
-      max-height: 46%;
-      background: rgba(10, 4, 3, .45); backdrop-filter: blur(3px);
+      left: 8px; right: 8px; width: auto; bottom: 8px; top: auto;
+      max-height: 52vh;
+      background: rgba(10, 4, 3, .55); backdrop-filter: blur(3px);
       border: 1px solid var(--line-dim); padding: 8px 10px;
     }
     .msg { margin-bottom: 12px; }
-    .msg .body { font-size: 14px; }
+    .msg .body { font-size: 15px; }
+    .msg .who { font-size: 9px; }
+
+    /* orb hide/show control, bottom-right corner of the stage */
+    #orbToggle {
+      display: block; position: absolute; right: 8px; bottom: 8px; z-index: 3;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px;
+      color: var(--fog); background: rgba(24, 8, 5, .7);
+      border: 1px solid var(--line-dim); padding: 8px 10px; cursor: pointer;
+      clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    }
+    /* when the orb is hidden, chat gets the full stage */
+    #stage.no-orb #entity { display: none; }
+    #stage.no-orb #log { max-height: 78vh; }
 
     /* console wraps so input + buttons stay finger-sized */
-    #console { flex-wrap: wrap; gap: 8px; padding: 10px; }
+    #console { flex-wrap: wrap; gap: 8px; padding: 10px; position: sticky; bottom: 0; }
     #input { order: -1; flex: 1 1 100%; font-size: 16px; padding: 12px; }
-    .tag { flex: 1 1 auto; text-align: center; padding: 11px 8px; font-size: 10px; }
-    #send { flex: 1 1 100%; padding: 13px; font-size: 14px; }
+    .tag { flex: 1 1 0; text-align: center; padding: 12px 6px; font-size: 10px; min-width: 64px; }
+    #send { flex: 1 1 100%; padding: 14px; font-size: 14px; }
+  }
+
+  /* very small phones: tighten the console labels further */
+  @media (max-width: 380px) {
+    .tag { letter-spacing: 1px; padding: 12px 4px; }
+    #titlebar { letter-spacing: 1px; }
   }
 </style>
 </head>
@@ -223,6 +257,8 @@
       </div>
 
       <div id="log"></div>
+
+      <button id="orbToggle" title="show / hide the orb to give the log more room">HIDE ORB</button>
     </div>
 
     <div id="console">
@@ -552,6 +588,14 @@ async function recordToggle() {
   }
 }
 micBtn.addEventListener("click", recordToggle);
+
+/* ── orb toggle (mobile): reclaim the stage for chat ──────────── */
+const orbToggle = document.getElementById("orbToggle");
+const stage = document.getElementById("stage");
+orbToggle.addEventListener("click", () => {
+  const hidden = stage.classList.toggle("no-orb");
+  orbToggle.textContent = hidden ? "SHOW ORB" : "HIDE ORB";
+});
 
 /* ── vitals (unchanged) ─────────────────────────────────────────── */
 async function refreshVitals() {

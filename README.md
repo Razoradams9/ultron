@@ -26,6 +26,16 @@ copy .env.example .env        # then paste your ANTHROPIC_API_KEY (or OPENAI_API
 
 Open **http://127.0.0.1:8000** — the control room. Type. It executes.
 
+### On your phone (via Google Colab)
+
+Open `colab.ipynb` in Google Colab and run the cells top to bottom. It clones
+the repo, installs deps, takes your Groq key, and prints a public URL (ngrok if
+you add a token, else Colab's port proxy) you can open on your phone. The
+dashboard is responsive: the vitals collapse to a slim strip, the console
+buttons go finger-sized, and a `HIDE ORB` control frees the whole screen for
+the chat log. Optional cells persist memory to Google Drive and run the cloned
+voice on a free GPU.
+
 ## What it can do
 
 | Tool | Effect |

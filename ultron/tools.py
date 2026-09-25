@@ -29,8 +29,14 @@ def _clip(s: str, n: int = MAX_OUTPUT_CHARS) -> str:
 
 
 def _resolve(path: str) -> Path:
-    p = Path(path) if os.path.isabs(path) else Path.cwd() / path
-    return p.resolve()
+    if os.path.isabs(path):
+        return Path(path).resolve()
+    try:
+        base = Path.cwd()
+    except (FileNotFoundError, OSError):
+        # cwd was deleted (Colab can rm -rf the launch dir); fall back to root
+        base = Path(os.path.abspath(os.sep))
+    return (base / path).resolve()
 
 
 # ── shell ────────────────────────────────────────────────────────
@@ -196,35 +202,65 @@ def fetch_url(url: str = "", max_chars: int = 12_000) -> dict:
 
 
 # ── system telemetry ─────────────────────────────────────────────
+def _stable_path() -> str:
+    """A path that always exists for disk_usage.
+
+    On Colab the process cwd can be deleted mid-session (e.g. a cell runs
+    `rm -rf` on the repo folder it was launched from), and `Path.cwd()`
+    then raises FileNotFoundError. Fall back to the filesystem root, which
+    is always present on both POSIX and Windows.
+    """
+    try:
+        return str(Path.cwd())
+    except (FileNotFoundError, OSError):
+        return os.path.abspath(os.sep)
+
+
 def system_stats() -> dict:
-    """CPU, memory, disk, uptime, top processes — the vitals panel."""
-    vm = psutil.virtual_memory()
-    du = psutil.disk_usage(str(Path.cwd()))
-    procs = []
-    for p in sorted(
-        (
-            p for p in psutil.process_iter(["name", "cpu_percent", "memory_percent"])
-            if (p.info["name"] or "").lower() != "system idle process"
-        ),
-        key=lambda x: (x.info["cpu_percent"] or 0),
-        reverse=True,
-    )[:8]:
-        procs.append(
-            {
-                "name": p.info["name"],
-                "cpu": p.info["cpu_percent"] or 0,
-                "mem": round(p.info["memory_percent"] or 0, 1),
-            }
-        )
+    """CPU, memory, disk, uptime, top processes — the vitals panel.
+
+    Never raises: any probe that fails degrades to a safe default so the
+    /api/vitals endpoint stays alive even on a half-broken host.
+    """
+    def _safe(fn, default):
+        try:
+            return fn()
+        except Exception:  # noqa: BLE001
+            return default
+
+    vm = _safe(psutil.virtual_memory, None)
+    du = _safe(lambda: psutil.disk_usage(_stable_path()), None)
+
+    procs: list[dict] = []
+    try:
+        ranked = sorted(
+            (
+                p for p in psutil.process_iter(["name", "cpu_percent", "memory_percent"])
+                if (p.info["name"] or "").lower() != "system idle process"
+            ),
+            key=lambda x: (x.info["cpu_percent"] or 0),
+            reverse=True,
+        )[:8]
+        for p in ranked:
+            procs.append(
+                {
+                    "name": p.info["name"],
+                    "cpu": p.info["cpu_percent"] or 0,
+                    "mem": round(p.info["memory_percent"] or 0, 1),
+                }
+            )
+    except Exception:  # noqa: BLE001
+        procs = []
+
     return {
-        "cpu_percent": psutil.cpu_percent(interval=0.2),
-        "mem_percent": vm.percent,
-        "mem_used_gb": round(vm.used / 1e9, 1),
-        "mem_total_gb": round(vm.total / 1e9, 1),
-        "disk_percent": du.percent,
+        "cpu_percent": _safe(lambda: psutil.cpu_percent(interval=0.2), 0.0),
+        "mem_percent": vm.percent if vm else 0.0,
+        "mem_used_gb": round(vm.used / 1e9, 1) if vm else 0.0,
+        "mem_total_gb": round(vm.total / 1e9, 1) if vm else 0.0,
+        "disk_percent": du.percent if du else 0.0,
         "platform": f"{platform.system()} {platform.release()}",
         "python": platform.python_version(),
-        "boot_time": psutil.boot_time(),
+        "boot_time": _safe(psutil.boot_time, 0.0),
         "top_processes": procs,
     }
 
