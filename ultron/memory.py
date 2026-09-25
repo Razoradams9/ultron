@@ -7,9 +7,12 @@ Two tables:
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import tempfile
 import threading
 import time
+from pathlib import Path
 from typing import Any, List, Optional
 
 from .config import DB_PATH, HISTORY_LIMIT
@@ -17,31 +20,61 @@ from .config import DB_PATH, HISTORY_LIMIT
 _lock = threading.Lock()
 _conn: Optional[sqlite3.Connection] = None
 
+_SCHEMA = """
+    CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ts REAL NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT,
+        meta TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_messages_ts ON messages(ts);
+    CREATE TABLE IF NOT EXISTS facts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ts REAL NOT NULL,
+        source TEXT NOT NULL,
+        text TEXT NOT NULL
+    );
+"""
+
+
+def _connect(path) -> sqlite3.Connection:
+    """Open (creating if needed) the SQLite DB at `path` and apply the schema.
+
+    Ensures the parent directory exists first \u2014 a bare connect() fails with
+    'unable to open database file' when the folder is missing or the path is
+    a dangling symlink (e.g. a Google Drive mount that isn't actually
+    mounted)."""
+    p = Path(path)
+    if p.parent and not p.parent.exists():
+        p.parent.mkdir(parents=True, exist_ok=True)
+    # A broken symlink resolves to a missing target; drop it so we can recreate.
+    if p.is_symlink() and not p.exists():
+        p.unlink(missing_ok=True)
+    conn = sqlite3.connect(str(p), check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    with _lock:
+        conn.executescript(_SCHEMA)
+        conn.commit()
+    return conn
+
 
 def init() -> None:
     global _conn
-    _conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    _conn.row_factory = sqlite3.Row
-    with _lock:
-        _conn.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ts REAL NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT,
-                meta TEXT
-            );
-            CREATE INDEX IF NOT EXISTS idx_messages_ts ON messages(ts);
-            CREATE TABLE IF NOT EXISTS facts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ts REAL NOT NULL,
-                source TEXT NOT NULL,
-                text TEXT NOT NULL
-            );
-            """
+    try:
+        _conn = _connect(DB_PATH)
+    except (sqlite3.OperationalError, OSError) as e:
+        # The configured DB path is unusable (missing dir, dead Drive symlink,
+        # read-only mount, ...). Don't take the whole server down for it \u2014
+        # fall back to a writable temp DB so the app still boots. Memory just
+        # won't persist across restarts.
+        fallback = Path(tempfile.gettempdir()) / "ultron.db"
+        print(
+            f"[memory] could not open {DB_PATH} ({e}); "
+            f"falling back to {fallback} (memory will not persist)",
+            flush=True,
         )
-        _conn.commit()
+        _conn = _connect(fallback)
 
 
 def _ensure() -> sqlite3.Connection:
