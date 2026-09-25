@@ -62,7 +62,9 @@ def speak(text: str) -> dict:
         "model": os.environ.get("GROQ_TTS_MODEL", "canopylabs/orpheus-v1-english"),
         "input": text[:2000],
         "response_format": "wav",
-        "voice": os.environ.get("GROQ_TTS_VOICE", "atlas"),
+        # Valid Orpheus English voices: troy, austin, hannah, autumn, ...
+        # (the old default "atlas" is not a real voice and caused 502s).
+        "voice": os.environ.get("GROQ_TTS_VOICE", "troy"),
     })
     code, out = _run_curl(
         [
