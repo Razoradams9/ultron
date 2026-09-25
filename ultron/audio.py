@@ -55,42 +55,62 @@ def _curl_available() -> bool:
 
 def transcribe(data: bytes, filename: str, content_type: str) -> dict:
     """Speech-to-text via whisper-large-v3-turbo (multipart upload)."""
-    import io
-
     model = os.environ.get("GROQ_STT_MODEL", "whisper-large-v3-turbo")
     ctype = content_type or "audio/webm"
-    boundary = "----ultron" + os.urandom(8).hex()
-    b = boundary.encode()
-    parts = [
-        b"--" + b + b"\r\n"
-        b'Content-Disposition: form-data; name="model"\r\n\r\n'
-        + model.encode() + b"\r\n",
-        b"--" + b + b"\r\n"
-        b'Content-Disposition: form-data; name="response_format"\r\n\r\n'
-        b"json\r\n",
-        b"--" + b + b"\r\n"
-        b'Content-Disposition: form-data; name="file"; filename="'
-        + (filename or "speech.webm").encode() + b'"\r\n'
-        b"Content-Type: " + ctype.encode() + b"\r\n\r\n" + data + b"\r\n",
-        b"--" + b + b"--\r\n",
-    ]
-    payload = b"".join(parts)
-    req = urllib.request.Request(
-        BASE + "/audio/transcriptions",
-        data=payload,
-        headers={
-            "Authorization": "Bearer " + _key(),
-            "Content-Type": "multipart/form-data; boundary=" + boundary,
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=90) as r:
-            out = r.read()
-    except urllib.error.HTTPError as e:
-        out = e.read()
-    except Exception as e:  # noqa: BLE001
-        return {"error": f"stt request failed: {e!r}"}
+    url = BASE + "/audio/transcriptions"
+    out = b""
+
+    # PRIMARY: curl (dodges Cloudflare 1010 on Colab); file written to disk
+    if _curl_available():
+        try:
+            with tempfile.NamedTemporaryFile("wb", suffix=".bin", delete=False) as f:
+                f.write(data)
+                upload_path = f.name
+            p = subprocess.run(
+                [CURL, "-s", "--max-time", "90", url,
+                 "-H", "Authorization: Bearer " + _key(),
+                 "-F", "model=" + model,
+                 "-F", "response_format=json",
+                 "-F", f"file=@{upload_path};type={ctype}"],
+                capture_output=True, timeout=100,
+            )
+            os.unlink(upload_path)
+            out = p.stdout
+        except Exception:  # noqa: BLE001
+            out = b""
+
+    # FALLBACK: urllib multipart
+    if not out:
+        boundary = "----ultron" + os.urandom(8).hex()
+        b = boundary.encode()
+        payload = b"".join([
+            b"--" + b + b"\r\n"
+            b'Content-Disposition: form-data; name="model"\r\n\r\n'
+            + model.encode() + b"\r\n",
+            b"--" + b + b"\r\n"
+            b'Content-Disposition: form-data; name="response_format"\r\n\r\n'
+            b"json\r\n",
+            b"--" + b + b"\r\n"
+            b'Content-Disposition: form-data; name="file"; filename="'
+            + (filename or "speech.webm").encode() + b'"\r\n'
+            b"Content-Type: " + ctype.encode() + b"\r\n\r\n" + data + b"\r\n",
+            b"--" + b + b"--\r\n",
+        ])
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={
+                "Authorization": "Bearer " + _key(),
+                "Content-Type": "multipart/form-data; boundary=" + boundary,
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=90) as r:
+                out = r.read()
+        except urllib.error.HTTPError as e:
+            out = e.read()
+        except Exception as e:  # noqa: BLE001
+            return {"error": f"stt request failed: {e!r}"}
     try:
         res = json.loads(out.decode(errors="replace"))
     except json.JSONDecodeError:
@@ -111,16 +131,13 @@ def speak(text: str) -> dict:
         "voice": os.environ.get("GROQ_TTS_VOICE", "troy"),
     }
     url = BASE + "/audio/speech"
+    status, out = -1, b""
 
-    # primary path: urllib (UTF-8 safe, works on Colab)
-    try:
-        status, out = _post_json(url, payload, timeout=180)
-    except Exception as e:  # noqa: BLE001
-        status, out = -1, str(e).encode()
-
-    # if urllib got blocked/failed and curl exists, retry via curl using a
-    # temp file for the body so no non-ASCII text hits the command line
-    if (status != 200 or not out or out[:1] == b"{") and _curl_available():
+    # PRIMARY: curl. urllib gets Cloudflare-blocked (error 1010) on Groq's
+    # audio endpoint from data-center IPs (e.g. Colab); curl slips through.
+    # Body goes via a temp file so non-ASCII text (em-dashes) never touches
+    # the command line — that previously crashed with UnicodeEncodeError.
+    if _curl_available():
         try:
             with tempfile.NamedTemporaryFile("wb", suffix=".json", delete=False) as f:
                 f.write(json.dumps(payload).encode("utf-8"))
@@ -136,9 +153,16 @@ def speak(text: str) -> dict:
             if p.returncode == 0 and p.stdout and p.stdout[:1] != b"{":
                 return {"audio": p.stdout, "content_type": "audio/wav"}
             if p.stdout:
-                out, status = p.stdout, 200 if p.returncode == 0 else status
+                out, status = p.stdout, 200 if p.returncode == 0 else 502
         except Exception:  # noqa: BLE001
             pass
+
+    # FALLBACK: urllib (works where curl is absent, e.g. some Windows setups)
+    if out[:1] != b"{" and (status != 200 or not out):
+        try:
+            status, out = _post_json(url, payload, timeout=180)
+        except Exception as e:  # noqa: BLE001
+            status, out = -1, str(e).encode()
 
     if out[:1] == b"{":
         try:
